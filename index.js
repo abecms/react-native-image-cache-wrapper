@@ -156,7 +156,7 @@ export default class CachedImage extends Component {
                           this._downloading = false;
                       }, 0);
                   }, (error) => {
-                      console.log('Wrapper 160', error);
+                      // console.log('Wrapper 160', error);
                       // cache failed use original source
                       if (this._mounted) {
                           setTimeout(() => {
@@ -171,7 +171,7 @@ export default class CachedImage extends Component {
         }
 
         if (this.state.source) {
-            console.log('Wrapper 175');
+            // console.log('Wrapper 175');
             const renderImage = (props, children) => (children != null ?
               <ImageBackground {...props}>{children}</ImageBackground> :
             <Image {...props}/>);
@@ -180,7 +180,7 @@ export default class CachedImage extends Component {
                 ...this.props,
                 source: this.state.source,
                 onError: (error) => {
-                    console.log('Wrapper 184', error);
+                    // console.log('Wrapper 184', error);
                     // error happened, delete cache
                     if (this.props.source && this.props.source.uri) {
                         CachedImage.deleteCache(this.props.source.uri);
@@ -265,7 +265,7 @@ async function _saveCacheFile(url: string, success: Function, failure: Function)
                       if (res && res.respInfo && res.respInfo.headers && (!res.respInfo.headers["Content-Encoding"] || !res.respInfo.headers["content-encoding"]) && (!res.respInfo.headers["Transfer-Encoding"] || !res.respInfo.headers["transfer-encoding"]) && (res.respInfo.headers["Content-Length"] || res.respInfo.headers["content-length"])) {
                           const expectedContentLength = (res.respInfo.headers["Content-Length"] !== undefined ? res.respInfo.headers["Content-Length"] : res.respInfo.headers["content-length"]);
                           let actualContentLength;
-                          console.log(url, expectedContentLength);
+                          // console.log(url, expectedContentLength);
                           try {
                               const fileStats = await RNFetchBlob.fs.stat(res.path());
 
@@ -275,12 +275,12 @@ async function _saveCacheFile(url: string, success: Function, failure: Function)
 
                               actualContentLength = fileStats.size;
                           } catch (error) {
-                              console.log('276', error);
+                              // console.log('276', error);
                               throw new Error("DownloadFailed:" + url);
                           }
 
                           if (expectedContentLength != actualContentLength) {
-                              console.log('281');
+                              // console.log('281');
                               throw new Error("DownloadFailed:" + url);
                           }
                       }
