@@ -49,12 +49,12 @@ export default class CachedImage extends Component {
     static isUrlCached = (url: string, success: Function, failure: Function) => {
         const cacheFile = _getCacheFilename(url);
         RNFetchBlob.fs.exists(cacheFile)
-            .then((exists) => {
-                success && success(exists);
-            })
-            .catch((error) => {
-                failure && failure(error);
-            });
+          .then((exists) => {
+              success && success(exists);
+          })
+          .catch((error) => {
+              failure && failure(error);
+          });
     };
 
     /**
@@ -75,17 +75,17 @@ export default class CachedImage extends Component {
     static getSize = (url: string, success: Function, failure: Function) => {
 
         CachedImage.prefetch(url, 0,
-            (cacheFile) => {
-                if (Platform.OS === 'android') {
-                    url = "file://" + cacheFile;
-                } else {
-                    url = cacheFile;
-                }
-                Image.getSize(url, success, failure);
-            },
-            (error) => {
-                Image.getSize(url, success, failure);
-            });
+          (cacheFile) => {
+              if (Platform.OS === 'android') {
+                  url = "file://" + cacheFile;
+              } else {
+                  url = cacheFile;
+              }
+              Image.getSize(url, success, failure);
+          },
+          (error) => {
+              Image.getSize(url, success, failure);
+          });
 
     };
 
@@ -98,7 +98,6 @@ export default class CachedImage extends Component {
      * @param failure callback (error:string)=>{}
      */
     static prefetch = (url: string, expiration: number, success: Function, failure: Function) => {
-
         // source invalidate
         if (!url || url.toString() !== url) {
             failure && failure("no url.");
@@ -108,18 +107,18 @@ export default class CachedImage extends Component {
         const cacheFile = _getCacheFilename(url);
 
         RNFetchBlob.fs.stat(cacheFile)
-            .then((stats) => {
-                // if exist and not expired then use it.
-                if (!Boolean(expiration) || (expiration * 1000 + stats.lastModified) > (new Date().getTime())) {
-                    success && success(cacheFile);
-                } else {
-                    _saveCacheFile(url, success, failure);
-                }
-            })
-            .catch((error) => {
-                // not exist
-                _saveCacheFile(url, success, failure);
-            });
+          .then((stats) => {
+              // if exist and not expired then use it.
+              if (!Boolean(expiration) || (expiration * 1000 + stats.lastModified) > (new Date().getTime())) {
+                  success && success(cacheFile);
+              } else {
+                  _saveCacheFile(url, success, failure);
+              }
+          })
+          .catch((error) => {
+              // not exist
+              _saveCacheFile(url, success, failure);
+          });
     };
 
     constructor(props) {
@@ -148,38 +147,40 @@ export default class CachedImage extends Component {
             if (!this.state.source && !this._downloading) {
                 this._downloading = true;
                 CachedImage.prefetch(this.props.source.uri,
-                    this.props.expiration,
-                    (cacheFile) => {
-                        setTimeout(() => {
-                            if (this._mounted) {
-                                this.setState({source: {uri: "file://" + cacheFile}});
-                            }
-                            this._downloading = false;
-                        }, 0);
-                    }, (error) => {
-                        // cache failed use original source
-                        if (this._mounted) {
-                            setTimeout(() => {
-                                this.setState({source: this.props.source});
-                        }, 0);
-                        }
-                        this._downloading = false;
-                    });
+                  this.props.expiration,
+                  (cacheFile) => {
+                      setTimeout(() => {
+                          if (this._mounted) {
+                              this.setState({source: {uri: "file://" + cacheFile}});
+                          }
+                          this._downloading = false;
+                      }, 0);
+                  }, (error) => {
+                      console.log('Wrapper 160', error);
+                      // cache failed use original source
+                      if (this._mounted) {
+                          setTimeout(() => {
+                              this.setState({source: this.props.source});
+                          }, 0);
+                      }
+                      this._downloading = false;
+                  });
             }
         } else {
             this.state.source = this.props.source;
         }
 
         if (this.state.source) {
-
+            console.log('Wrapper 175');
             const renderImage = (props, children) => (children != null ?
-                <ImageBackground {...props}>{children}</ImageBackground> :
-                <Image {...props}/>);
+              <ImageBackground {...props}>{children}</ImageBackground> :
+            <Image {...props}/>);
 
             const result = renderImage({
                 ...this.props,
                 source: this.state.source,
                 onError: (error) => {
+                    console.log('Wrapper 184', error);
                     // error happened, delete cache
                     if (this.props.source && this.props.source.uri) {
                         CachedImage.deleteCache(this.props.source.uri);
@@ -200,12 +201,12 @@ export default class CachedImage extends Component {
             return (result);
         } else {
             return (
-                <View {...this.props} style={this.props.style ? [this.props.style, {
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                }] : {alignItems: 'center', justifyContent: 'center'}}>
-                    {this.props.activityIndicator}
-                </View>);
+              <View {...this.props} style={this.props.style ? [this.props.style, {
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                  }] : {alignItems: 'center', justifyContent: 'center'}}>
+              {this.props.activityIndicator}
+              </View>);
         }
     }
 }
@@ -249,40 +250,43 @@ async function _saveCacheFile(url: string, success: Function, failure: Function)
 
         if (isNetwork) {
             const tempCacheFile = cacheFile + '.tmp';
-            _unlinkFile(tempCacheFile);
-            RNFetchBlob.config({
-                // response data will be saved to this path if it has access right.
-                path: tempCacheFile,
-            })
-                .fetch(
+            await _unlinkFile(tempCacheFile);
+            if (true) {
+                RNFetchBlob.config({
+                    // response data will be saved to this path if it has access right.
+                    path: tempCacheFile,
+                    timeout: 60000,
+                })
+                  .fetch(
                     'GET',
                     url
-                )
-                .then(async (res) => {
+                  )
+                  .then(async (res) => {
+                      if (res && res.respInfo && res.respInfo.headers && (!res.respInfo.headers["Content-Encoding"] || !res.respInfo.headers["content-encoding"]) && (!res.respInfo.headers["Transfer-Encoding"] || !res.respInfo.headers["transfer-encoding"]) && (res.respInfo.headers["Content-Length"] || res.respInfo.headers["content-length"])) {
+                          const expectedContentLength = (res.respInfo.headers["Content-Length"] !== undefined ? res.respInfo.headers["Content-Length"] : res.respInfo.headers["content-length"]);
+                          let actualContentLength;
+                          console.log(url, expectedContentLength);
+                          try {
+                              const fileStats = await RNFetchBlob.fs.stat(res.path());
 
-                    if (res && res.respInfo && res.respInfo.headers && !res.respInfo.headers["Content-Encoding"] && !res.respInfo.headers["Transfer-Encoding"] && res.respInfo.headers["Content-Length"]) {
-                        const expectedContentLength = res.respInfo.headers["Content-Length"];
-                        let actualContentLength;
+                              if (!fileStats || !fileStats.size) {
+                                  throw new Error("FileNotFound:" + url);
+                              }
 
-                        try {
-                            const fileStats = await RNFetchBlob.fs.stat(res.path());
+                              actualContentLength = fileStats.size;
+                          } catch (error) {
+                              console.log('276', error);
+                              throw new Error("DownloadFailed:" + url);
+                          }
 
-                            if (!fileStats || !fileStats.size) {
-                                throw new Error("FileNotFound:"+url);
-                            }
+                          if (expectedContentLength != actualContentLength) {
+                              console.log('281');
+                              throw new Error("DownloadFailed:" + url);
+                          }
+                      }
 
-                            actualContentLength = fileStats.size;
-                        } catch (error) {
-                            throw new Error("DownloadFailed:"+url);
-                        }
-
-                        if (expectedContentLength != actualContentLength) {
-                            throw new Error("DownloadFailed:"+url);
-                        }
-                    }
-
-                    _unlinkFile(cacheFile);
-                    RNFetchBlob.fs
+                      await _unlinkFile(cacheFile);
+                      RNFetchBlob.fs
                         .mv(tempCacheFile, cacheFile)
                         .then(() => {
                             success && success(cacheFile);
@@ -290,23 +294,24 @@ async function _saveCacheFile(url: string, success: Function, failure: Function)
                         .catch(async (error) => {
                             throw error;
                         });
-                })
-                .catch(async (error) => {
-                    _unlinkFile(tempCacheFile);
-                    _unlinkFile(cacheFile);
-                    failure && failure(error);
-                });
+                  })
+                  .catch(async (error) => {
+                      _unlinkFile(tempCacheFile);
+                      _unlinkFile(cacheFile);
+                      failure && failure(error);
+                  });
+            }
         } else if (isBase64) {
             let data = url.replace(/data:/i, '');
             RNFetchBlob.fs
-                .writeFile(cacheFile, data, 'base64')
-                .then(() => {
-                    success && success(cacheFile);
-                })
-                .catch(async (error) => {
-                    _unlinkFile(cacheFile);
-                    failure && failure(error);
-                });
+              .writeFile(cacheFile, data, 'base64')
+              .then(() => {
+                  success && success(cacheFile);
+              })
+              .catch(async (error) => {
+                  _unlinkFile(cacheFile);
+                  failure && failure(error);
+              });
         } else {
             failure && failure(new Error("NotSupportedUrl"));
         }
